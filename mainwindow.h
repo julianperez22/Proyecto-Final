@@ -6,8 +6,11 @@
 #include <QGraphicsView>
 #include <QGraphicsPixmapItem>
 #include <QTimer>
-#include <QKeyEvent>  // 👈 Escucha del teclado
-#include "personaje.h" // 👈 Nueva clase balsa
+#include <QKeyEvent>
+#include <vector>
+
+#include "personaje.h"
+#include "obstaculo.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -22,20 +25,43 @@ public:
     ~MainWindow();
 
 protected:
-    void keyPressEvent(QKeyEvent *evento) override; // 👈 Captura pulsaciones
+    void keyPressEvent(QKeyEvent *evento) override;
 
 private slots:
     void animarMarea();
+    void aumentarDificultad();
+    void generarObstaculo();
 
 private:
+    void reiniciarJuego();
+
     Ui::MainWindow *ui;
     QGraphicsScene *escena;
     QGraphicsView *vista;
+    Personaje *balsaItem;
 
-    QGraphicsPixmapItem *objetoFondo;
-    Personaje *balsaItem; // 👈 El objeto de nuestro bote jugable
+
+    std::vector<QGraphicsPixmapItem*> listaFondos;
+    std::vector<bool> esEspejoFondo;
+    const int ANCHO_FONDO = 1280;
+    const int CANTIDAD_FONDOS = 4;
+
+
+    std::vector<Obstaculo*> listaObstaculos;
+    QPixmap texturaPiedra;
+
+
     QTimer *timerMarea;
+    QTimer *timerDificultad;
+    QTimer *timerSpawnObstaculos;
+
     double tiempo;
+    double velocidadFondo;
+    int segundosTranscurridos;
+
+
+    bool juegoTerminado;
+    QGraphicsTextItem* textoGameOverItem;
 };
 
 #endif // MAINWINDOW_H

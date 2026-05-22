@@ -2,5 +2,6 @@
     <qresource prefix="/">
         <file>logo.png</file>
         <file>fondo_mar.png</file>
+        <file>piedra.png</file>
     </qresource>
 </RCC>

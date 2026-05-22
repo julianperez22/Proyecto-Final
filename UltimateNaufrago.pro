@@ -11,10 +11,12 @@ CONFIG += c++17
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
+    obstaculo.cpp \
     personaje.cpp
 
 HEADERS += \
     mainwindow.h \
+    obstaculo.h \
     personaje.h
 
 FORMS += \

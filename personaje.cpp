@@ -7,16 +7,16 @@
 #include <QPainterPath>
 
 Personaje::Personaje(QGraphicsItem *parent)
-    : QGraphicsPixmapItem(parent), velocidad(12) // Velocidad ligeramente aumentada para la pantalla grande
+    : QGraphicsPixmapItem(parent), velocidad(12)
 {
-    // 1. Crear un lienzo transparente de 120x120 para la balsa isométrica
+
     QPixmap lienzoBalsa(120, 120);
     lienzoBalsa.fill(Qt::transparent);
 
     QPainter painter(&lienzoBalsa);
     painter.setRenderHint(QPainter::Antialiasing, true);
 
-    // Paleta de Colores
+
     QColor colorMadera(139, 90, 43);
     QColor maderaOscura(93, 58, 25);
     QColor maderaClara(193, 141, 93);
@@ -25,12 +25,12 @@ Personaje::Personaje(QGraphicsItem *parent)
     QColor colorVelaSombra(195, 190, 175);
     QColor colorCuerda(210, 180, 140);
 
-    // [CAPA 1] Sombra proyectada en el agua
+
     painter.setBrush(colorSombra);
     painter.setPen(Qt::NoPen);
     painter.drawEllipse(15, 65, 90, 45);
 
-    // [CAPA 2] Los 5 Troncos Isométricos
+
     int desviosX[5] = {0, 12, 24, 36, 48};
     int desviosY[5] = {0, 6, 12, 18, 24};
 
@@ -60,13 +60,11 @@ Personaje::Personaje(QGraphicsItem *parent)
         painter.restore();
     }
 
-    // [CAPA 3] Cuerdas de amarre transversales
     painter.setPen(QPen(colorCuerda, 2, Qt::SolidLine, Qt::RoundCap));
     painter.drawLine(25, 60, 75, 85);
     painter.drawLine(50, 48, 100, 73);
 
-    // [CAPA 4] Dos Barriles de Carga
-    // Barril Izquierdo
+
     int bx1 = 45, by1 = 44;
     QLinearGradient gradBarril1(bx1, by1, bx1 + 18, by1);
     gradBarril1.setColorAt(0.0, maderaOscura);
@@ -79,7 +77,7 @@ Personaje::Personaje(QGraphicsItem *parent)
     painter.drawArc(bx1, by1 + 4, 18, 4, 0, 16 * 360);
     painter.drawArc(bx1, by1 + 14, 18, 4, 0, 16 * 360);
 
-    // Barril Derecho
+
     int bx2 = 72, by2 = 58;
     QLinearGradient gradBarril2(bx2, by2, bx2 + 18, by2);
     gradBarril2.setColorAt(0.0, maderaOscura);
@@ -92,7 +90,7 @@ Personaje::Personaje(QGraphicsItem *parent)
     painter.drawArc(bx2, by2 + 4, 18, 4, 0, 16 * 360);
     painter.drawArc(bx2, by2 + 14, 18, 4, 0, 16 * 360);
 
-    // [CAPA 5] Mástil Central
+
     painter.setPen(Qt::NoPen);
     QLinearGradient gradMastil(64, 15, 69, 15);
     gradMastil.setColorAt(0.0, maderaOscura);
@@ -100,7 +98,7 @@ Personaje::Personaje(QGraphicsItem *parent)
     painter.setBrush(gradMastil);
     painter.drawRect(64, 15, 5, 50);
 
-    // Travesaño superior inclinado
+
     QLinearGradient gradViga(40, 20, 85, 25);
     gradViga.setColorAt(0.0, maderaOscura);
     gradViga.setColorAt(1.0, colorMadera);
@@ -111,7 +109,7 @@ Personaje::Personaje(QGraphicsItem *parent)
     painter.drawRect(-25, -2, 50, 4);
     painter.restore();
 
-    // [CAPA 6] Vela de Tela Rasgada
+
     QPainterPath rutaVela;
     rutaVela.moveTo(42, 23);
     rutaVela.lineTo(84, 32);
@@ -133,26 +131,26 @@ Personaje::Personaje(QGraphicsItem *parent)
     painter.setPen(QPen(QColor(140, 135, 120), 1));
     painter.drawPath(rutaVela);
 
-    // Costuras de la vela
+
     painter.setPen(QPen(QColor(90, 85, 75, 120), 1));
     painter.drawLine(50, 27, 48, 40);
     painter.drawLine(68, 30, 64, 48);
 
-    // [CAPA 7] Cuerdas de tensión traseras
+
     painter.setPen(QPen(colorCuerda, 1, Qt::SolidLine));
     painter.drawLine(41, 23, 30, 56);
     painter.drawLine(84, 32, 94, 66);
 
     painter.end();
 
-    // Asignar el lienzo pintado como textura oficial del objeto
+
     setPixmap(lienzoBalsa);
 
-    // Posición inicial: centrado horizontalmente y en el tercio inferior verticalmente
+
     setPos(580, 480);
 }
 
-// MÉTODOS DE MOVIMIENTO CON LOS LÍMITES HD (1280 x 720)
+
 void Personaje::moverIzquierda() {
     if (x() > 0) setPos(x() - velocidad, y());
 }
@@ -162,7 +160,7 @@ void Personaje::moverDerecha() {
 }
 
 void Personaje::moverArriba() {
-    // Límite del horizonte fijado en 360 para evitar que flote en el cielo del mar
+
     if (y() > 360) setPos(x(), y() - velocidad);
 }
 
@@ -170,17 +168,17 @@ void Personaje::moverAbajo() {
     if (y() < 720 - 120) setPos(x(), y() + velocidad);
 }
 
-// APLICACIÓN DE LAS OLAS Y DE LA CORRIENTE CONSTANTE
+
 void Personaje::aplicarFisicasMarea(double empujeX, double empujeY) {
     double nuevaX = x() + empujeX;
     double nuevaY = y() + empujeY;
 
-    // Control estricto de colisiones perimetrales
+
     if (nuevaX < 0) nuevaX = 0;
     if (nuevaX > 1280 - 120) nuevaX = 1280 - 120;
 
-    if (nuevaY < 360) nuevaY = 360; // No sube más allá del agua realista
-    if (nuevaY > 720 - 120) nuevaY = 720 - 120; // No se sale por abajo
+    if (nuevaY < 360) nuevaY = 360;
+    if (nuevaY > 720 - 120) nuevaY = 720 - 120;
 
     setPos(nuevaX, nuevaY);
 }
