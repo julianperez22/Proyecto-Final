@@ -7,7 +7,7 @@
 Personaje::Personaje(QGraphicsItem *parent)
     : QGraphicsItem(parent), velocidad(12),
     filaActual(0), columnaActual(0), mirandoIzquierda(false),
-    estaMoviendo(false), escalaSprite(1.6)
+    estaMoviendo(false), estaLanzando(false), escalaSprite(1.6)
 {
     QImage imagenSprite;
     if (imagenSprite.load(":/sprites_naufrago.png")) {
@@ -32,6 +32,9 @@ Personaje::Personaje(QGraphicsItem *parent)
 
     timerAnimacion = new QTimer(this);
     connect(timerAnimacion, &QTimer::timeout, this, &Personaje::actualizarFotograma);
+
+    timerLanzamiento = new QTimer(this);
+    timerLanzamiento->setSingleShot(true);
 }
 
 void Personaje::actualizarFotograma()
@@ -49,7 +52,7 @@ void Personaje::actualizarEstadoAnimacion()
     } else {
         timerAnimacion->stop();
         estaMoviendo = false;
-        columnaActual = 0;
+        if (!estaLanzando) columnaActual = 0;
     }
     update();
 }
@@ -58,7 +61,29 @@ void Personaje::detenerMovimiento()
 {
     teclasPresionadas.clear();
     actualizarEstadoAnimacion();
-    filaActual = 0;
+    if (!estaLanzando) filaActual = 0;
+}
+
+void Personaje::lanzarDisco()
+{
+    if (estaLanzando || timerLanzamiento->isActive()) return;
+
+    estaLanzando = true;
+    filaActual = 2;           // Fila de lanzar
+    columnaActual = 0;
+    update();
+
+    // Emitir señal para que MainWindow cree el disco
+    emit discoLanzado(x() + 30, y() + 10, !mirandoIzquierda);
+
+    timerLanzamiento->start(700); // Cooldown
+
+    // Volver a estado normal después de la animación de lanzamiento
+    QTimer::singleShot(450, this, [this]() {
+        estaLanzando = false;
+        if (!estaMoviendo) filaActual = 0;
+        update();
+    });
 }
 
 // ====================== MOVIMIENTOS ======================
@@ -75,7 +100,7 @@ void Personaje::moverIzquierda()
 
 void Personaje::moverDerecha()
 {
-    if (x() < 1450) setPos(x() + velocidad, y());   // Ajustado para ventana más grande
+    if (x() < 1450) setPos(x() + velocidad, y());
     mirandoIzquierda = false;
     filaActual = 1;
     teclasPresionadas.insert(Qt::Key_Right);
@@ -110,7 +135,7 @@ void Personaje::aplicarFisicasMarea(double empujeX, double empujeY)
     if (y() < 300) setPos(x(), 300);
     if (y() > 650) setPos(x(), 650);
 
-    if (teclasPresionadas.isEmpty()) {
+    if (teclasPresionadas.isEmpty() && !estaLanzando) {
         filaActual = 0;
         columnaActual = 0;
     }

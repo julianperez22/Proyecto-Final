@@ -1,9 +1,9 @@
 #include "disco.h"
 
 Disco::Disco(QGraphicsScene *escenaPadre, bool haciaIzquierda)
-    : escena(escenaPadre), haciaIzquierda(haciaIzquierda), velocidad(18.0)
+    : QGraphicsPixmapItem(), escena(escenaPadre), velocidad(18.0), haciaIzquierda(haciaIzquierda)
 {
-    QPixmap pixmap(":/disco.png");
+    QPixmap pixmap(":/disco.png");   // Cambia a ":/disco.png" cuando tengas el sprite
     setPixmap(pixmap.scaled(40, 40, Qt::KeepAspectRatio, Qt::SmoothTransformation));
     setZValue(10);
 }
@@ -18,9 +18,9 @@ void Disco::actualizarPosicion()
         setPos(x() + velocidad, y());
     }
 
-    // Eliminar de forma segura cuando sale de pantalla
-    if (x() < -100 || x() > 1750) {
-        if (escena) {
+    // Eliminamos el disco ANTES de que salga completamente de la pantalla
+    if (x() < -50 || x() > 1700) {
+        if (escena && scene()) {
             escena->removeItem(this);
         }
         delete this;

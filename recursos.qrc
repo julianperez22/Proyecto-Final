@@ -4,5 +4,7 @@
         <file>fondo_mar.png</file>
         <file>piedra.png</file>
         <file>sprites_naufrago.png</file>
+        <file>disco.png</file>
+        <file>gaviota.png</file>
     </qresource>
 </RCC>

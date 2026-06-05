@@ -20,7 +20,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     escena = new QGraphicsScene(0, 0, 1600, 900, this);
 
-    // Preparar fondos
+    // Fondos
     QImage imagenBase(":/fondo_mar.png");
     QImage imagenNormal = imagenBase.scaled(ANCHO_FONDO, 900, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     QImage imagenEspejo = imagenNormal.flipped(Qt::Horizontal);
@@ -42,6 +42,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     balsaItem = new Personaje();
     escena->addItem(balsaItem);
+
+    connect(balsaItem, &Personaje::discoLanzado, this, &MainWindow::crearDisco);
 
     vista = new QGraphicsView(escena, this);
     vista->setGeometry(0, 0, 1600, 900);
@@ -71,17 +73,42 @@ MainWindow::MainWindow(QWidget *parent)
     connect(timerSpawnObstaculos, &QTimer::timeout, this, &MainWindow::generarObstaculo);
     timerSpawnObstaculos->start(2500);
 
+    timerSpawnGaviotas = new QTimer(this);
+    connect(timerSpawnGaviotas, &QTimer::timeout, this, &MainWindow::generarGaviota);
+    timerSpawnGaviotas->start(10000);
+
     vista->show();
 }
 
 void MainWindow::aumentarDificultad()
 {
+    if (juegoTerminado) return;
+
     segundosTranscurridos += 10;
     velocidadFondo += 1.2;
+    qDebug() << "⚡ Dificultad aumentada - Velocidad ahora:" << velocidadFondo;
+}
+
+void MainWindow::generarGaviota()
+{
+    if (juegoTerminado) return;
+
+    Gaviota* nueva = new Gaviota(escena);
+    listaGaviotas.push_back(nueva);
+}
+
+void MainWindow::crearDisco(double posX, double posY, bool haciaDerecha)
+{
+    if (juegoTerminado) return;
+    Disco* nuevoDisco = new Disco(escena, !haciaDerecha);
+    nuevoDisco->setPos(posX, posY);
+    escena->addItem(nuevoDisco);
+    listaDiscos.push_back(nuevoDisco);
 }
 
 void MainWindow::generarObstaculo()
 {
+    if (juegoTerminado) return;
     if (QRandomGenerator::global()->bounded(0, 100) < 70) {
         Obstaculo* nuevaPiedra = new Obstaculo(texturaPiedra, escena);
         listaObstaculos.push_back(nuevaPiedra);
@@ -90,68 +117,104 @@ void MainWindow::generarObstaculo()
 
 void MainWindow::animarMarea()
 {
+    if (juegoTerminado) return;
+
     tiempo += 0.02;
     double desplazamientoY = std::cos(tiempo) * 2.0;
-    int posY = static_cast<int>(desplazamientoY) - 25;   // ← Subimos el océano (ajusta este número)
+    int posY = static_cast<int>(desplazamientoY) - 25;
 
+    // Fondos
     for (size_t i = 0; i < listaFondos.size(); ++i) {
         listaFondos[i]->setPos(listaFondos[i]->x() - velocidadFondo, posY);
     }
 
-    if (listaFondos.front()->x() <= -ANCHO_FONDO) {
+    if (!listaFondos.empty() && listaFondos.front()->x() <= -ANCHO_FONDO) {
         QGraphicsPixmapItem* fondoSaliente = listaFondos.front();
         listaFondos.erase(listaFondos.begin());
         bool espejoSaliente = esEspejoFondo.front();
         esEspejoFondo.erase(esEspejoFondo.begin());
 
-        QGraphicsPixmapItem* ultimoFondoActual = listaFondos.back();
-        double nuevaX = ultimoFondoActual->x() + (ANCHO_FONDO - 1);
+        QGraphicsPixmapItem* ultimo = listaFondos.back();
+        double nuevaX = ultimo->x() + (ANCHO_FONDO - 1);
         fondoSaliente->setPos(nuevaX, posY);
 
         listaFondos.push_back(fondoSaliente);
         esEspejoFondo.push_back(espejoSaliente);
     }
 
+    // Obstáculos
     for (auto it = listaObstaculos.begin(); it != listaObstaculos.end(); ) {
-        Obstaculo* piedra = *it;
-        piedra->actualizarPosicion(velocidadFondo);
+        Obstaculo* p = *it;
+        if (p) p->actualizarPosicion(velocidadFondo);
 
-        if (balsaItem->collidesWithItem(piedra)) {
+        if (p && balsaItem->collidesWithItem(p)) {
             juegoTerminado = true;
-
-            timerMarea->stop();
-            timerDificultad->stop();
-            timerSpawnObstaculos->stop();
-
-            textoGameOverItem = new QGraphicsTextItem("GAME OVER\n[ Presiona Enter para reiniciar ]");
-            QFont fuenteGame("Arial", 40, QFont::Bold);
-            textoGameOverItem->setFont(fuenteGame);
-            textoGameOverItem->setDefaultTextColor(Qt::red);
-            textoGameOverItem->setTextWidth(800);
-
-            textoGameOverItem->setPos(500, 350);
-            escena->addItem(textoGameOverItem);
-
-            qDebug() << "💥 ¡Colisión detectada!";
+            detenerTimers();
+            mostrarGameOver("GAME OVER");
             return;
         }
 
-        if (piedra->x() < -60) {
-            escena->removeItem(piedra);
-            delete piedra;
+        if (p && p->x() < -60) {
+            escena->removeItem(p);
+            delete p;
             it = listaObstaculos.erase(it);
         } else {
             ++it;
         }
     }
 
-    double factorDificultad = velocidadFondo / 2.0;
-    double fuerzaMareaX = (-0.2 * factorDificultad) + (std::sin(tiempo) * 0.5);
-    double fuerzaCorrienteY = std::cos(tiempo) * 0.15;
-    balsaItem->aplicarFisicasMarea(fuerzaMareaX, fuerzaCorrienteY);
+    // Discos
+    for (auto it = listaDiscos.begin(); it != listaDiscos.end(); ) {
+        Disco* d = *it;
+        if (d == nullptr) {
+            it = listaDiscos.erase(it);
+            continue;
+        }
+
+        d->actualizarPosicion();
+
+        // Si ya fue eliminado, lo sacamos de la lista
+        if (d->scene() == nullptr) {
+            it = listaDiscos.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
+    // Gaviotas
+    for (auto it = listaGaviotas.begin(); it != listaGaviotas.end(); ) {
+        Gaviota* g = *it;
+        if (g && g->scene() != nullptr) {
+            g->actualizarPosicion(velocidadFondo);
+            ++it;
+        } else {
+            it = listaGaviotas.erase(it);
+        }
+    }
+    double factor = velocidadFondo / 2.0;
+    double fx = (-0.2 * factor) + (std::sin(tiempo) * 0.5);
+    double fy = std::cos(tiempo) * 0.15;
+    balsaItem->aplicarFisicasMarea(fx, fy);
 }
 
-// ... (el resto del archivo se mantiene igual)
+void MainWindow::detenerTimers()
+{
+    if (timerMarea) timerMarea->stop();
+    if (timerDificultad) timerDificultad->stop();
+    if (timerSpawnObstaculos) timerSpawnObstaculos->stop();
+    if (timerSpawnGaviotas) timerSpawnGaviotas->stop();
+}
+
+void MainWindow::mostrarGameOver(const QString& mensaje)
+{
+    textoGameOverItem = new QGraphicsTextItem(mensaje);
+    QFont fuente("Arial", 40, QFont::Bold);
+    textoGameOverItem->setFont(fuente);
+    textoGameOverItem->setDefaultTextColor(Qt::red);
+    textoGameOverItem->setTextWidth(800);
+    textoGameOverItem->setPos(480, 320);
+    escena->addItem(textoGameOverItem);
+}
 
 void MainWindow::keyPressEvent(QKeyEvent *evento)
 {
@@ -159,6 +222,11 @@ void MainWindow::keyPressEvent(QKeyEvent *evento)
         if (evento->key() == Qt::Key_Return || evento->key() == Qt::Key_Enter) {
             reiniciarJuego();
         }
+        return;
+    }
+
+    if (evento->key() == Qt::Key_Space) {
+        balsaItem->lanzarDisco();
         return;
     }
 
@@ -182,13 +250,16 @@ void MainWindow::keyReleaseEvent(QKeyEvent *evento)
 
 void MainWindow::reiniciarJuego()
 {
-    for (Obstaculo* piedra : listaObstaculos) {
-        escena->removeItem(piedra);
-        delete piedra;
-    }
+    for (auto p : listaObstaculos) { if(p){ escena->removeItem(p); delete p; }}
     listaObstaculos.clear();
 
-    if (textoGameOverItem != nullptr) {
+    for (auto d : listaDiscos) { if(d){ escena->removeItem(d); delete d; }}
+    listaDiscos.clear();
+
+    for (auto g : listaGaviotas) { if(g){ escena->removeItem(g); delete g; }}
+    listaGaviotas.clear();
+
+    if (textoGameOverItem) {
         escena->removeItem(textoGameOverItem);
         delete textoGameOverItem;
         textoGameOverItem = nullptr;
@@ -204,11 +275,11 @@ void MainWindow::reiniciarJuego()
     timerMarea->start(16);
     timerDificultad->start(10000);
     timerSpawnObstaculos->start(2500);
+    timerSpawnGaviotas->start(3800);
 }
 
 MainWindow::~MainWindow()
 {
-    for (Obstaculo* piedra : listaObstaculos) delete piedra;
-    listaObstaculos.clear();
+    reiniciarJuego();
     delete ui;
 }

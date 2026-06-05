@@ -11,6 +11,8 @@
 
 #include "personaje.h"
 #include "obstaculo.h"
+#include "disco.h"
+#include "gaviota.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -32,9 +34,13 @@ private slots:
     void animarMarea();
     void aumentarDificultad();
     void generarObstaculo();
+    void generarGaviota();
+    void crearDisco(double posX, double posY, bool haciaDerecha);
 
 private:
     void reiniciarJuego();
+    void detenerTimers();
+    void mostrarGameOver(const QString& mensaje);
 
     Ui::MainWindow *ui;
     QGraphicsScene *escena;
@@ -44,18 +50,19 @@ private:
     std::vector<QGraphicsPixmapItem*> listaFondos;
     std::vector<bool> esEspejoFondo;
 
-    // === TAMAÑO DE LA VENTANA ===
-    const int ANCHO_VENTANA = 1600;
-    const int ALTO_VENTANA = 900;
     const int ANCHO_FONDO = 1600;
     const int CANTIDAD_FONDOS = 4;
 
     std::vector<Obstaculo*> listaObstaculos;
+    std::vector<Disco*> listaDiscos;
+    std::vector<Gaviota*> listaGaviotas;
+
     QPixmap texturaPiedra;
 
     QTimer *timerMarea;
     QTimer *timerDificultad;
     QTimer *timerSpawnObstaculos;
+    QTimer *timerSpawnGaviotas;
 
     double tiempo;
     double velocidadFondo;
