@@ -3,5 +3,6 @@
         <file>logo.png</file>
         <file>fondo_mar.png</file>
         <file>piedra.png</file>
+        <file>sprites_naufrago.png</file>
     </qresource>
 </RCC>

@@ -1,184 +1,177 @@
 #include "personaje.h"
-#include <QPixmap>
 #include <QPainter>
-#include <QColor>
 #include <QLinearGradient>
-#include <QRadialGradient>
-#include <QPainterPath>
+#include <QImage>
+#include <QDebug>
 
 Personaje::Personaje(QGraphicsItem *parent)
-    : QGraphicsPixmapItem(parent), velocidad(12)
+    : QGraphicsItem(parent), velocidad(12),
+    filaActual(0), columnaActual(0), mirandoIzquierda(false),
+    estaMoviendo(false), escalaSprite(1.6)
 {
+    QImage imagenSprite;
+    if (imagenSprite.load(":/sprites_naufrago.png")) {
+        imagenSprite = imagenSprite.convertToFormat(QImage::Format_ARGB32);
 
-    QPixmap lienzoBalsa(120, 120);
-    lienzoBalsa.fill(Qt::transparent);
+        for (int y = 0; y < imagenSprite.height(); ++y) {
+            for (int x = 0; x < imagenSprite.width(); ++x) {
+                QColor c = imagenSprite.pixelColor(x, y);
+                if (c.red() < 30 && c.green() < 30 && c.blue() < 30) {
+                    imagenSprite.setPixelColor(x, y, Qt::transparent);
+                }
+            }
+        }
 
-    QPainter painter(&lienzoBalsa);
-    painter.setRenderHint(QPainter::Antialiasing, true);
-
-
-    QColor colorMadera(139, 90, 43);
-    QColor maderaOscura(93, 58, 25);
-    QColor maderaClara(193, 141, 93);
-    QColor colorSombra(40, 40, 40, 70);
-    QColor colorVela(240, 235, 220);
-    QColor colorVelaSombra(195, 190, 175);
-    QColor colorCuerda(210, 180, 140);
-
-
-    painter.setBrush(colorSombra);
-    painter.setPen(Qt::NoPen);
-    painter.drawEllipse(15, 65, 90, 45);
-
-
-    int desviosX[5] = {0, 12, 24, 36, 48};
-    int desviosY[5] = {0, 6, 12, 18, 24};
-
-    for(int i = 0; i < 5; ++i) {
-        int xBase = 20 + desviosX[i];
-        int yBase = 50 + desviosY[i];
-
-        QLinearGradient gradienteTronco(xBase, yBase, xBase + 15, yBase + 35);
-        gradienteTronco.setColorAt(0.0, maderaOscura);
-        gradienteTronco.setColorAt(0.4, colorMadera);
-        gradienteTronco.setColorAt(1.0, maderaOscura);
-
-        painter.setBrush(gradienteTronco);
-        painter.setPen(QPen(maderaOscura, 1));
-
-        painter.save();
-        painter.translate(xBase + 25, yBase + 15);
-        painter.rotate(-25);
-        painter.drawRect(-25, -7, 55, 14);
-
-        QRadialGradient tapaGrad(5, 0, 7);
-        tapaGrad.setColorAt(0.0, maderaClara);
-        tapaGrad.setColorAt(0.8, colorMadera);
-        tapaGrad.setColorAt(1.0, maderaOscura);
-        painter.setBrush(tapaGrad);
-        painter.drawEllipse(25, -7, 6, 14);
-        painter.restore();
+        spriteSheet = QPixmap::fromImage(imagenSprite);
+        qDebug() << "✅ Spritesheet cargado:" << spriteSheet.width() << "x" << spriteSheet.height();
+    } else {
+        qDebug() << "❌ No se pudo cargar ':/sprites_naufrago.png'";
     }
 
-    painter.setPen(QPen(colorCuerda, 2, Qt::SolidLine, Qt::RoundCap));
-    painter.drawLine(25, 60, 75, 85);
-    painter.drawLine(50, 48, 100, 73);
+    setPos(100, 450);
 
-
-    int bx1 = 45, by1 = 44;
-    QLinearGradient gradBarril1(bx1, by1, bx1 + 18, by1);
-    gradBarril1.setColorAt(0.0, maderaOscura);
-    gradBarril1.setColorAt(0.5, colorMadera);
-    gradBarril1.setColorAt(1.0, maderaOscura);
-    painter.setBrush(gradBarril1);
-    painter.setPen(QPen(maderaOscura, 1));
-    painter.drawRoundedRect(bx1, by1, 18, 22, 4, 4);
-    painter.setPen(QPen(Qt::darkGray, 1));
-    painter.drawArc(bx1, by1 + 4, 18, 4, 0, 16 * 360);
-    painter.drawArc(bx1, by1 + 14, 18, 4, 0, 16 * 360);
-
-
-    int bx2 = 72, by2 = 58;
-    QLinearGradient gradBarril2(bx2, by2, bx2 + 18, by2);
-    gradBarril2.setColorAt(0.0, maderaOscura);
-    gradBarril2.setColorAt(0.5, colorMadera);
-    gradBarril2.setColorAt(1.0, maderaOscura);
-    painter.setBrush(gradBarril2);
-    painter.setPen(QPen(maderaOscura, 1));
-    painter.drawRoundedRect(bx2, by2, 18, 22, 4, 4);
-    painter.setPen(QPen(Qt::darkGray, 1));
-    painter.drawArc(bx2, by2 + 4, 18, 4, 0, 16 * 360);
-    painter.drawArc(bx2, by2 + 14, 18, 4, 0, 16 * 360);
-
-
-    painter.setPen(Qt::NoPen);
-    QLinearGradient gradMastil(64, 15, 69, 15);
-    gradMastil.setColorAt(0.0, maderaOscura);
-    gradMastil.setColorAt(1.0, maderaClara);
-    painter.setBrush(gradMastil);
-    painter.drawRect(64, 15, 5, 50);
-
-
-    QLinearGradient gradViga(40, 20, 85, 25);
-    gradViga.setColorAt(0.0, maderaOscura);
-    gradViga.setColorAt(1.0, colorMadera);
-    painter.setBrush(gradViga);
-    painter.save();
-    painter.translate(65, 23);
-    painter.rotate(12);
-    painter.drawRect(-25, -2, 50, 4);
-    painter.restore();
-
-
-    QPainterPath rutaVela;
-    rutaVela.moveTo(42, 23);
-    rutaVela.lineTo(84, 32);
-    rutaVela.quadTo(80, 45, 76, 58);
-    rutaVela.lineTo(70, 52);
-    rutaVela.lineTo(66, 56);
-    rutaVela.lineTo(60, 48);
-    rutaVela.lineTo(54, 54);
-    rutaVela.lineTo(46, 45);
-    rutaVela.lineTo(39, 49);
-    rutaVela.quadTo(40, 36, 42, 23);
-
-    QLinearGradient gradVelaTela(40, 20, 80, 55);
-    gradVelaTela.setColorAt(0.0, colorVela);
-    gradVelaTela.setColorAt(0.7, colorVelaSombra);
-    gradVelaTela.setColorAt(1.0, maderaOscura);
-
-    painter.setBrush(gradVelaTela);
-    painter.setPen(QPen(QColor(140, 135, 120), 1));
-    painter.drawPath(rutaVela);
-
-
-    painter.setPen(QPen(QColor(90, 85, 75, 120), 1));
-    painter.drawLine(50, 27, 48, 40);
-    painter.drawLine(68, 30, 64, 48);
-
-
-    painter.setPen(QPen(colorCuerda, 1, Qt::SolidLine));
-    painter.drawLine(41, 23, 30, 56);
-    painter.drawLine(84, 32, 94, 66);
-
-    painter.end();
-
-
-    setPixmap(lienzoBalsa);
-
-
-    setPos(580, 480);
+    timerAnimacion = new QTimer(this);
+    connect(timerAnimacion, &QTimer::timeout, this, &Personaje::actualizarFotograma);
 }
 
-
-void Personaje::moverIzquierda() {
-    if (x() > 0) setPos(x() - velocidad, y());
+void Personaje::actualizarFotograma()
+{
+    if (!estaMoviendo) return;
+    columnaActual = (columnaActual + 1) % TOTAL_FRAMES;
+    update();
 }
 
-void Personaje::moverDerecha() {
-    if (x() < 1280 - 120) setPos(x() + velocidad, y());
+void Personaje::actualizarEstadoAnimacion()
+{
+    if (!teclasPresionadas.isEmpty()) {
+        if (!timerAnimacion->isActive()) timerAnimacion->start(100);
+        estaMoviendo = true;
+    } else {
+        timerAnimacion->stop();
+        estaMoviendo = false;
+        columnaActual = 0;
+    }
+    update();
 }
 
-void Personaje::moverArriba() {
-
-    if (y() > 360) setPos(x(), y() - velocidad);
+void Personaje::detenerMovimiento()
+{
+    teclasPresionadas.clear();
+    actualizarEstadoAnimacion();
+    filaActual = 0;
 }
 
-void Personaje::moverAbajo() {
-    if (y() < 720 - 120) setPos(x(), y() + velocidad);
+// ====================== MOVIMIENTOS ======================
+
+void Personaje::moverIzquierda()
+{
+    if (x() > 10) setPos(x() - velocidad, y());
+    mirandoIzquierda = true;
+    filaActual = 1;
+    teclasPresionadas.insert(Qt::Key_Left);
+    teclasPresionadas.insert(Qt::Key_A);
+    actualizarEstadoAnimacion();
 }
 
+void Personaje::moverDerecha()
+{
+    if (x() < 1450) setPos(x() + velocidad, y());   // Ajustado para ventana más grande
+    mirandoIzquierda = false;
+    filaActual = 1;
+    teclasPresionadas.insert(Qt::Key_Right);
+    teclasPresionadas.insert(Qt::Key_D);
+    actualizarEstadoAnimacion();
+}
 
-void Personaje::aplicarFisicasMarea(double empujeX, double empujeY) {
-    double nuevaX = x() + empujeX;
-    double nuevaY = y() + empujeY;
+void Personaje::moverArriba()
+{
+    if (y() > 300) setPos(x(), y() - velocidad);
+    filaActual = 0;
+    teclasPresionadas.insert(Qt::Key_Up);
+    teclasPresionadas.insert(Qt::Key_W);
+    actualizarEstadoAnimacion();
+}
 
+void Personaje::moverAbajo()
+{
+    if (y() < 650) setPos(x(), y() + velocidad);
+    filaActual = 0;
+    teclasPresionadas.insert(Qt::Key_Down);
+    teclasPresionadas.insert(Qt::Key_S);
+    actualizarEstadoAnimacion();
+}
 
-    if (nuevaX < 0) nuevaX = 0;
-    if (nuevaX > 1280 - 120) nuevaX = 1280 - 120;
+void Personaje::aplicarFisicasMarea(double empujeX, double empujeY)
+{
+    setPos(x() + empujeX, y() + empujeY);
 
-    if (nuevaY < 360) nuevaY = 360;
-    if (nuevaY > 720 - 120) nuevaY = 720 - 120;
+    if (x() < 10) setPos(10, y());
+    if (x() > 1450) setPos(1450, y());
+    if (y() < 300) setPos(x(), 300);
+    if (y() > 650) setPos(x(), 650);
 
-    setPos(nuevaX, nuevaY);
+    if (teclasPresionadas.isEmpty()) {
+        filaActual = 0;
+        columnaActual = 0;
+    }
+}
+
+// ====================== DIBUJO ======================
+
+QRectF Personaje::boundingRect() const
+{
+    return QRectF(0, 0, ANCHO_SPRITE * escalaSprite, ALTO_SPRITE * escalaSprite);
+}
+
+void Personaje::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
+{
+    Q_UNUSED(option);
+    Q_UNUSED(widget);
+
+    painter->setRenderHint(QPainter::Antialiasing);
+    painter->setRenderHint(QPainter::SmoothPixmapTransform);
+
+    // === BALSA ===
+    double escalaBalsa = escalaSprite * 1.25;
+    double balsaW = ANCHO_SPRITE * escalaBalsa;
+    double balsaTop = ALTO_SPRITE * escalaSprite - 22;
+
+    QLinearGradient gradienteMadera(0, balsaTop, 0, balsaTop + 32);
+    gradienteMadera.setColorAt(0.0, QColor(139, 90, 43));
+    gradienteMadera.setColorAt(0.5, QColor(101, 67, 33));
+    gradienteMadera.setColorAt(1.0, QColor(54, 35, 18));
+
+    painter->setBrush(gradienteMadera);
+    painter->setPen(QPen(QColor(40, 25, 10), 2));
+    painter->drawRoundedRect(2, balsaTop, balsaW - 4, 12, 6, 6);
+    painter->drawRoundedRect(0, balsaTop + 11, balsaW, 13, 6, 6);
+    painter->drawRoundedRect(3, balsaTop + 22, balsaW - 6, 10, 5, 5);
+
+    // Cuerda
+    painter->setPen(QPen(QColor(210, 180, 140), 1.5));
+    painter->drawLine(5, balsaTop + 12, balsaW - 5, balsaTop + 12);
+
+    // === SPRITE ===
+    if (!spriteSheet.isNull()) {
+        int srcX = columnaActual * ANCHO_SPRITE;
+        int srcY = filaActual   * ALTO_SPRITE;
+
+        double destW = ANCHO_SPRITE * escalaSprite;
+        double destH = ALTO_SPRITE  * escalaSprite;
+
+        double destX = (balsaW - destW) / 2.0;
+        double destY = balsaTop - destH + 24;
+
+        painter->save();
+
+        if (mirandoIzquierda) {
+            painter->translate(destX + destW, destY);
+            painter->scale(-1, 1);
+            painter->drawPixmap(0, 0, destW, destH, spriteSheet, srcX, srcY, ANCHO_SPRITE, ALTO_SPRITE);
+        } else {
+            painter->drawPixmap(destX, destY, destW, destH, spriteSheet, srcX, srcY, ANCHO_SPRITE, ALTO_SPRITE);
+        }
+
+        painter->restore();
+    }
 }

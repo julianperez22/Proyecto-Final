@@ -15,14 +15,14 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     setWindowTitle("Ultimate Náufrago - Mar y Obstáculos");
-    resize(1280, 720);
+    resize(1600, 900);
     setWindowIcon(QIcon(":/logo.png"));
 
-    escena = new QGraphicsScene(0, 0, 1280, 720, this);
+    escena = new QGraphicsScene(0, 0, 1600, 900, this);
 
     // Preparar fondos
     QImage imagenBase(":/fondo_mar.png");
-    QImage imagenNormal = imagenBase.scaled(ANCHO_FONDO, 720, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+    QImage imagenNormal = imagenBase.scaled(ANCHO_FONDO, 900, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     QImage imagenEspejo = imagenNormal.flipped(Qt::Horizontal);
     QPixmap pixmapNormal = QPixmap::fromImage(imagenNormal);
     QPixmap pixmapEspejo = QPixmap::fromImage(imagenEspejo);
@@ -44,7 +44,7 @@ MainWindow::MainWindow(QWidget *parent)
     escena->addItem(balsaItem);
 
     vista = new QGraphicsView(escena, this);
-    vista->setGeometry(0, 0, 1280, 720);
+    vista->setGeometry(0, 0, 1600, 900);
     vista->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     vista->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     vista->setRenderHint(QPainter::Antialiasing, true);
@@ -56,10 +56,8 @@ MainWindow::MainWindow(QWidget *parent)
     juegoTerminado = false;
     textoGameOverItem = nullptr;
 
-
     QPixmap pixmapOriginal(":/piedra.png");
     texturaPiedra = pixmapOriginal.scaled(60, 60, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-
 
     timerMarea = new QTimer(this);
     connect(timerMarea, &QTimer::timeout, this, &MainWindow::animarMarea);
@@ -94,8 +92,7 @@ void MainWindow::animarMarea()
 {
     tiempo += 0.02;
     double desplazamientoY = std::cos(tiempo) * 2.0;
-    int posY = static_cast<int>(desplazamientoY);
-
+    int posY = static_cast<int>(desplazamientoY) - 25;   // ← Subimos el océano (ajusta este número)
 
     for (size_t i = 0; i < listaFondos.size(); ++i) {
         listaFondos[i]->setPos(listaFondos[i]->x() - velocidadFondo, posY);
@@ -115,11 +112,9 @@ void MainWindow::animarMarea()
         esEspejoFondo.push_back(espejoSaliente);
     }
 
-
     for (auto it = listaObstaculos.begin(); it != listaObstaculos.end(); ) {
         Obstaculo* piedra = *it;
         piedra->actualizarPosicion(velocidadFondo);
-
 
         if (balsaItem->collidesWithItem(piedra)) {
             juegoTerminado = true;
@@ -128,18 +123,16 @@ void MainWindow::animarMarea()
             timerDificultad->stop();
             timerSpawnObstaculos->stop();
 
-
             textoGameOverItem = new QGraphicsTextItem("GAME OVER\n[ Presiona Enter para reiniciar ]");
             QFont fuenteGame("Arial", 40, QFont::Bold);
             textoGameOverItem->setFont(fuenteGame);
             textoGameOverItem->setDefaultTextColor(Qt::red);
             textoGameOverItem->setTextWidth(800);
 
-
-            textoGameOverItem->setPos(290, 260);
+            textoGameOverItem->setPos(500, 350);
             escena->addItem(textoGameOverItem);
 
-            qDebug() << "💥 ¡Colisión detectada! Fin del juego. Presiona Enter para reiniciar.";
+            qDebug() << "💥 ¡Colisión detectada!";
             return;
         }
 
@@ -152,16 +145,16 @@ void MainWindow::animarMarea()
         }
     }
 
-
     double factorDificultad = velocidadFondo / 2.0;
     double fuerzaMareaX = (-0.2 * factorDificultad) + (std::sin(tiempo) * 0.5);
     double fuerzaCorrienteY = std::cos(tiempo) * 0.15;
     balsaItem->aplicarFisicasMarea(fuerzaMareaX, fuerzaCorrienteY);
 }
 
+// ... (el resto del archivo se mantiene igual)
+
 void MainWindow::keyPressEvent(QKeyEvent *evento)
 {
-
     if (juegoTerminado) {
         if (evento->key() == Qt::Key_Return || evento->key() == Qt::Key_Enter) {
             reiniciarJuego();
@@ -169,25 +162,31 @@ void MainWindow::keyPressEvent(QKeyEvent *evento)
         return;
     }
 
-
     if (evento->key() == Qt::Key_Left || evento->key() == Qt::Key_A) balsaItem->moverIzquierda();
     else if (evento->key() == Qt::Key_Right || evento->key() == Qt::Key_D) balsaItem->moverDerecha();
     else if (evento->key() == Qt::Key_Up || evento->key() == Qt::Key_W) balsaItem->moverArriba();
     else if (evento->key() == Qt::Key_Down || evento->key() == Qt::Key_S) balsaItem->moverAbajo();
 }
 
+void MainWindow::keyReleaseEvent(QKeyEvent *evento)
+{
+    if (juegoTerminado) return;
+
+    if (evento->key() == Qt::Key_Left || evento->key() == Qt::Key_A ||
+        evento->key() == Qt::Key_Right || evento->key() == Qt::Key_D ||
+        evento->key() == Qt::Key_Up || evento->key() == Qt::Key_W ||
+        evento->key() == Qt::Key_Down || evento->key() == Qt::Key_S) {
+        balsaItem->detenerMovimiento();
+    }
+}
 
 void MainWindow::reiniciarJuego()
 {
-    qDebug() << "🔄 Reiniciando el mar y limpiando rocas...";
-
-
     for (Obstaculo* piedra : listaObstaculos) {
         escena->removeItem(piedra);
         delete piedra;
     }
     listaObstaculos.clear();
-
 
     if (textoGameOverItem != nullptr) {
         escena->removeItem(textoGameOverItem);
@@ -195,15 +194,12 @@ void MainWindow::reiniciarJuego()
         textoGameOverItem = nullptr;
     }
 
-
     balsaItem->setPos(100, 450);
-
 
     tiempo = 0.0;
     segundosTranscurridos = 0;
     velocidadFondo = 2.0;
     juegoTerminado = false;
-
 
     timerMarea->start(16);
     timerDificultad->start(10000);

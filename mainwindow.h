@@ -26,6 +26,7 @@ public:
 
 protected:
     void keyPressEvent(QKeyEvent *evento) override;
+    void keyReleaseEvent(QKeyEvent *evento) override;
 
 private slots:
     void animarMarea();
@@ -40,16 +41,17 @@ private:
     QGraphicsView *vista;
     Personaje *balsaItem;
 
-
     std::vector<QGraphicsPixmapItem*> listaFondos;
     std::vector<bool> esEspejoFondo;
-    const int ANCHO_FONDO = 1280;
-    const int CANTIDAD_FONDOS = 4;
 
+    // === TAMAÑO DE LA VENTANA ===
+    const int ANCHO_VENTANA = 1600;
+    const int ALTO_VENTANA = 900;
+    const int ANCHO_FONDO = 1600;
+    const int CANTIDAD_FONDOS = 4;
 
     std::vector<Obstaculo*> listaObstaculos;
     QPixmap texturaPiedra;
-
 
     QTimer *timerMarea;
     QTimer *timerDificultad;
@@ -58,7 +60,6 @@ private:
     double tiempo;
     double velocidadFondo;
     int segundosTranscurridos;
-
 
     bool juegoTerminado;
     QGraphicsTextItem* textoGameOverItem;
