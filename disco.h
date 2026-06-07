@@ -15,6 +15,8 @@ private:
     QGraphicsScene *escena;
     double velocidad;
     bool haciaIzquierda;
+    bool debeEliminarse() const;
 };
+
 
 #endif // DISCO_H

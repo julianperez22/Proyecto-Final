@@ -15,6 +15,13 @@ Q_INTERFACES(QGraphicsItem)
 public:
 Personaje(QGraphicsItem *parent = nullptr);
 
+void restarVida(); // <-- Agregar este método público
+
+
+void recibirDanio();
+int obtenerVidas() const;
+void restablecerVidas();
+
 void moverIzquierda();
 void moverDerecha();
 void moverArriba();
@@ -34,7 +41,7 @@ void actualizarFotograma();
 
 private:
 void actualizarEstadoAnimacion();
-
+int vidas = 5;
 int velocidad;
 QPixmap spriteSheet;
 QTimer *timerAnimacion;

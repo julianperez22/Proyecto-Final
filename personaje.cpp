@@ -200,3 +200,27 @@ void Personaje::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
         painter->restore();
     }
 }
+void Personaje::recibirDanio()
+{
+    if (vidas > 0) {
+        vidas--;
+        qDebug() << "💥 ¡El personaje recibió daño! Vidas restantes:" << vidas;
+    }
+}
+
+int Personaje::obtenerVidas() const
+{
+    return vidas;
+}
+
+void Personaje::restablecerVidas()
+{
+    vidas = 5; // Utilizado al reiniciar el juego
+}
+
+void Personaje::restarVida() {
+    if (vidas > 0) {
+        vidas--;
+    }
+}
+

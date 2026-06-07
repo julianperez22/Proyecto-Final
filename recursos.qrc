@@ -6,5 +6,7 @@
         <file>sprites_naufrago.png</file>
         <file>disco.png</file>
         <file>gaviota.png</file>
+        <file>bala_agua.png</file>
+        <file>jefe_agua.png</file>
     </qresource>
 </RCC>

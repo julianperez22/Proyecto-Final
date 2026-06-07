@@ -9,16 +9,22 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    balaagua.cpp \
+    caca.cpp \
     disco.cpp \
     gaviota.cpp \
+    jefe.cpp \
     main.cpp \
     mainwindow.cpp \
     obstaculo.cpp \
     personaje.cpp
 
 HEADERS += \
+    balaagua.h \
+    caca.h \
     disco.h \
     gaviota.h \
+    jefe.h \
     mainwindow.h \
     obstaculo.h \
     personaje.h
